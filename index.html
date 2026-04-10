@@ -2,127 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartBooks AI - Repair Edition</title>
+    <title>SmartBooks AI - Instant Scan</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center">
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-6">
 
-    <div class="max-w-md w-full mt-6">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-black text-blue-500 italic tracking-tighter">SmartBooks AI</h1>
-            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Universal Scanning Engine</p>
-        </header>
+    <div class="max-w-md w-full bg-slate-800 p-8 rounded-[2rem] shadow-2xl border border-slate-700">
+        <h1 class="text-3xl font-black text-blue-500 italic mb-6">SmartBooks AI</h1>
+        
+        <input type="file" id="fileInp" class="hidden" accept="image/*">
+        <button onclick="document.getElementById('fileInp').click()" 
+                class="w-full py-12 border-2 border-dashed border-slate-600 rounded-2xl hover:border-blue-500 hover:bg-slate-700 transition-all mb-6">
+            <span class="text-4xl block mb-2">📄</span>
+            <span class="font-bold">Click to Scan Receipt</span>
+        </button>
 
-        <div id="dropzone" onclick="document.getElementById('fileInp').click()" 
-             class="bg-slate-800 border-2 border-dashed border-slate-700 rounded-[2.5rem] p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-slate-700/40 transition-all shadow-2xl group">
-            <input type="file" id="fileInp" class="hidden" accept="image/*">
-            <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">📄</div>
-            <p class="font-bold text-lg">Tap to Scan Receipt</p>
+        <div id="loader" class="hidden text-center text-blue-400 font-bold animate-pulse mb-6">
+            ⚡ ENGINE PROCESSING...
         </div>
 
-        <div id="loader" class="hidden mt-8 text-center animate-pulse">
-            <div class="inline-flex items-center px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold text-[10px]">
-                🚀 AI ANALYZING DATA...
+        <div id="result" class="hidden space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+            <div>
+                <p class="text-[10px] uppercase text-slate-500 font-bold">Vendor</p>
+                <p id="v" class="text-xl font-bold text-blue-300">---</p>
             </div>
-        </div>
-
-        <div id="results" class="hidden mt-8 bg-slate-800 rounded-[2.5rem] p-6 border border-slate-700 shadow-2xl space-y-4">
-            <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Entity</p>
-                <p id="resV" class="text-xl font-bold text-blue-300">---</p>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Total</p>
-                    <p id="resT" class="text-xl font-black text-emerald-400">---</p>
+            <div class="flex justify-between">
+                <div>
+                    <p class="text-[10px] uppercase text-slate-500 font-bold">Total</p>
+                    <p id="t" class="text-2xl font-black text-emerald-400">---</p>
                 </div>
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-[9px] text-slate-500 font-bold uppercase mb-1">Type</p>
-                    <p id="resC" class="text-xs font-bold text-slate-400">---</p>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold">Date</p>
+                    <p id="d" class="text-sm text-slate-400 font-bold">---</p>
                 </div>
             </div>
-            <button onclick="location.reload()" class="w-full py-4 bg-blue-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 mt-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95">Next Scan</button>
-        </div>
-
-        <div class="mt-10 opacity-30 hover:opacity-100 transition-opacity">
-            <p class="text-[10px] font-bold text-slate-600 mb-2 uppercase text-center">System Logs</p>
-            <div id="console" class="text-[9px] font-mono bg-black/40 p-4 rounded-xl border border-slate-800 text-slate-500 h-32 overflow-y-auto leading-relaxed">
-                > System Ready. Waiting for upload...
-            </div>
+            <button onclick="location.reload()" class="w-full py-3 bg-blue-600 rounded-xl font-bold mt-4">New Scan</button>
         </div>
     </div>
 
     <script>
-        const LOG = (msg) => {
-            const el = document.getElementById('console');
-            el.innerHTML += `<br>> ${msg}`;
-            el.scrollTop = el.scrollHeight;
-        };
-
-        const MINDEE_KEY = "md_rpPGaQD_IOh1ug2_4qiz1QyHZAdCp2W4VPjQO3xzOaM";
-        const GROQ_KEY = "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";
-
         document.getElementById('fileInp').onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('loader').classList.remove('hidden');
-            document.getElementById('results').classList.add('hidden');
-            LOG(`File detected: ${file.name}`);
+            const fd = new FormData();
+            fd.append('image', file);
 
             try {
-                // 1. MINDEE CALL (Using Standard Invoices V4)
-                LOG("Sending to Mindee API...");
-                const fd = new FormData();
-                fd.append('document', file);
+                const res = await fetch('http://127.0.0.1:5000/scan', { method: 'POST', body: fd });
+                const data = await res.json();
 
-                const mRes = await fetch("https://api.mindee.net/v1/products/mindee/invoices/v4/predict", {
-                    method: "POST",
-                    headers: { "Authorization": `Token ${MINDEE_KEY}` },
-                    body: fd
-                });
-
-                if(!mRes.ok) throw new Error(`Mindee Error: ${mRes.status}`);
-                const mData = await mRes.json();
-                LOG("Mindee responded successfully!");
-
-                // 2. GROQ REFINEMENT
-                LOG("Connecting to Groq AI...");
-                const prediction = mData.document.inference.prediction;
-                
-                const gRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${GROQ_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: "llama3-8b-8192",
-                        messages: [{
-                            role: "user", 
-                            content: `Analyze this: ${JSON.stringify(prediction)}. Return a JSON with: vendor, total, currency, category.`
-                        }],
-                        response_format: { type: "json_object" }
-                    })
-                });
-
-                if(!gRes.ok) throw new Error(`Groq Error: ${gRes.status}`);
-                const gData = await gRes.json();
-                const final = JSON.parse(gData.choices[0].message.content);
-                LOG("Data refined. Rendering...");
-
-                // 3. UI UPDATE
-                document.getElementById('resV').innerText = final.vendor || "Unknown";
-                document.getElementById('resT').innerText = `${final.total || 0} ${final.currency || 'UGX'}`;
-                document.getElementById('resC').innerText = final.category || "General";
+                document.getElementById('v').innerText = data.vendor;
+                document.getElementById('t').innerText = data.total + " " + data.currency;
+                document.getElementById('d').innerText = data.date;
                 
                 document.getElementById('loader').classList.add('hidden');
-                document.getElementById('results').classList.remove('hidden');
-
+                document.getElementById('result').classList.remove('hidden');
             } catch (err) {
-                LOG(`❌ FATAL ERROR: ${err.message}`);
-                alert("Processing failed. Check the System Logs below.");
+                alert("Backend not responding. Run 'py app.py' in your terminal!");
             }
         };
     </script>
