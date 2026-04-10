@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBooks AI Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 flex flex-col items-center">
+
+    <div class="max-w-md w-full mt-4">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-black text-blue-500 italic tracking-tighter">SmartBooks AI</h1>
+            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-1">Autonomous Ledger Sync</p>
+        </header>
+
+        <div id="dropzone" onclick="document.getElementById('fileInp').click()" 
+             class="bg-slate-800 border-2 border-dashed border-slate-700 rounded-[2.5rem] p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-slate-700/40 transition-all shadow-2xl group">
+            <input type="file" id="fileInp" class="hidden" accept="image/*">
+            <div class="text-6xl mb-6 group-hover:scale-110 transition-transform">📄</div>
+            <p class="font-bold text-xl text-slate-200">Tap to Scan</p>
+            <p class="text-slate-500 text-xs mt-2 uppercase font-semibold">Receipts • Invoices • Ledgers</p>
+        </div>
+
+        <div id="loader" class="hidden mt-10 text-center animate-pulse">
+            <div class="inline-flex items-center px-6 py-3 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold text-xs">
+                <span class="mr-2">🧠</span> AI IS EXTRACTING DATA...
+            </div>
+        </div>
+
+        <div id="results" class="hidden mt-10 bg-slate-800 rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl space-y-6">
+            <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Entity</p>
+                <p id="v" class="text-2xl font-bold text-blue-300">---</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total</p>
+                    <p id="t" class="text-xl font-black text-emerald-400">---</p>
+                </div>
+                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Type</p>
+                    <p id="c" class="text-xs font-bold text-slate-300 uppercase">---</p>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-700/50 grid grid-cols-2 gap-3">
+                <button onclick="copyToClipboard()" class="py-4 bg-slate-700 rounded-2xl text-[11px] font-black uppercase hover:bg-slate-600 transition-colors">📋 Copy</button>
+                <button onclick="exportCSV()" class="py-4 bg-slate-700 rounded-2xl text-[11px] font-black uppercase hover:bg-slate-600 transition-colors">📊 CSV</button>
+                <button onclick="location.reload()" class="col-span-2 py-5 bg-blue-600 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-700 mt-2 shadow-lg shadow-blue-500/30 active:scale-95 transition-all">Next Document</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let extractedData = null;
+
+        document.getElementById('fileInp').onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            const fd = new FormData();
+            fd.append('image', file);
+
+            try {
+                // Ensure the URL matches your Flask Backend exactly
+                const res = await fetch('http://127.0.0.1:5000/scan', { 
+                    method: 'POST', 
+                    body: fd 
+                });
+
+                if (!res.ok) throw new Error("Connection failed");
+
+                extractedData = await res.json();
+
+                document.getElementById('v').innerText = extractedData.vendor || "Unknown";
+                document.getElementById('t').innerText = (extractedData.total || "0") + " " + (extractedData.currency || "UGX");
+                document.getElementById('c').innerText = extractedData.category || "Misc";
+                
+                document.getElementById('results').classList.remove('hidden');
+            } catch (err) {
+                alert("SmartBooks AI could not connect to the engine. Make sure app.py is running!");
+                console.error(err);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        };
+
+        function copyToClipboard() {
+            const summary = `${extractedData.vendor}: ${extractedData.total} ${extractedData.currency}`;
+            navigator.clipboard.writeText(summary);
+            alert("Transaction copied!");
+        }
+
+        function exportCSV() {
+            const csv = `Vendor,Total,Currency,Category\n${extractedData.vendor},${extractedData.total},${extractedData.currency},${extractedData.category}`;
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `smartbooks_${Date.now()}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
