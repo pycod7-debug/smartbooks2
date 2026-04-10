@@ -2,41 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SmartBooks AI - Instant Scan</title>
+    <title>SmartBooks AI | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-6">
+<body class="bg-[#0a0c10] text-slate-300 min-h-screen flex overflow-hidden">
 
-    <div class="max-w-md w-full bg-slate-800 p-8 rounded-[2rem] shadow-2xl border border-slate-700">
-        <h1 class="text-3xl font-black text-blue-500 italic mb-6">SmartBooks AI</h1>
-        
-        <input type="file" id="fileInp" class="hidden" accept="image/*">
-        <button onclick="document.getElementById('fileInp').click()" 
-                class="w-full py-12 border-2 border-dashed border-slate-600 rounded-2xl hover:border-blue-500 hover:bg-slate-700 transition-all mb-6">
-            <span class="text-4xl block mb-2">📄</span>
-            <span class="font-bold">Click to Scan Receipt</span>
-        </button>
+    <div class="w-64 border-r border-slate-800 p-6 flex flex-col hidden md:flex">
+        <div class="text-blue-500 font-black text-2xl italic mb-10">SmartBooks.ai</div>
+        <nav class="space-y-4">
+            <div class="bg-blue-500/10 text-blue-400 p-3 rounded-xl font-bold text-sm">📁 Document Scan</div>
+            <div class="p-3 text-slate-600 font-bold text-sm">📊 Analytics</div>
+            <div class="p-3 text-slate-600 font-bold text-sm">⚙️ Settings</div>
+        </nav>
+    </div>
 
-        <div id="loader" class="hidden text-center text-blue-400 font-bold animate-pulse mb-6">
-            ⚡ ENGINE PROCESSING...
-        </div>
-
-        <div id="result" class="hidden space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-            <div>
-                <p class="text-[10px] uppercase text-slate-500 font-bold">Vendor</p>
-                <p id="v" class="text-xl font-bold text-blue-300">---</p>
-            </div>
-            <div class="flex justify-between">
+    <div class="flex-1 p-8 overflow-y-auto">
+        <div class="max-w-4xl mx-auto">
+            <header class="flex justify-between items-center mb-12">
                 <div>
-                    <p class="text-[10px] uppercase text-slate-500 font-bold">Total</p>
-                    <p id="t" class="text-2xl font-black text-emerald-400">---</p>
+                    <h2 class="text-white text-3xl font-black">AI Document Extraction</h2>
+                    <p class="text-slate-500 text-sm">Powered by Mindee Invoice V4 & Groq Engine</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-[10px] uppercase text-slate-500 font-bold">Date</p>
-                    <p id="d" class="text-sm text-slate-400 font-bold">---</p>
+                <div id="apiStatus" class="px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold border border-emerald-500/20">SYSTEM ONLINE</div>
+            </header>
+
+            <div id="dropzone" onclick="document.getElementById('fileInp').click()" 
+                 class="bg-[#161b22] border-2 border-dashed border-slate-700 rounded-3xl p-20 text-center cursor-pointer hover:border-blue-500 transition-all shadow-2xl">
+                <input type="file" id="fileInp" class="hidden" accept="image/*">
+                <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="text-4xl text-blue-500">↑</span>
+                </div>
+                <h3 class="text-white font-bold text-xl mb-2">Upload a document</h3>
+                <p class="text-slate-500">JPG, PNG, or PDF up to 10MB</p>
+            </div>
+
+            <div id="loader" class="hidden mt-12 text-center">
+                <div class="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-blue-400 font-bold animate-pulse">Running Neural OCR...</p>
+            </div>
+
+            <div id="results" class="hidden mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 bg-[#161b22] rounded-3xl p-8 border border-slate-800 space-y-6">
+                    <div class="border-b border-slate-800 pb-4">
+                        <span class="text-[10px] font-black uppercase text-slate-500">Supplier</span>
+                        <h4 id="resV" class="text-2xl font-bold text-white mt-1">---</h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-8">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-slate-500">Date</span>
+                            <p id="resD" class="text-white font-bold mt-1">---</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-slate-500">Category</span>
+                            <p id="resC" class="text-white font-bold mt-1">---</p>
+                        </div>
+                    </div>
+                    <div class="pt-6">
+                        <button onclick="location.reload()" class="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-500 transition-all">Scan Another</button>
+                    </div>
+                </div>
+
+                <div class="bg-blue-600 rounded-3xl p-8 text-white flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] font-black uppercase text-blue-200">Total Amount</span>
+                        <div id="resT" class="text-4xl font-black mt-2">---</div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-blue-400/30">
+                        <span class="text-[10px] font-black uppercase text-blue-200">Confidence Score</span>
+                        <div id="resConf" class="text-xl font-bold mt-1">--%</div>
+                    </div>
                 </div>
             </div>
-            <button onclick="location.reload()" class="w-full py-3 bg-blue-600 rounded-xl font-bold mt-4">New Scan</button>
         </div>
     </div>
 
@@ -45,22 +83,32 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            document.getElementById('dropzone').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
+
             const fd = new FormData();
             fd.append('image', file);
 
             try {
-                const res = await fetch('http://127.0.0.1:5000/scan', { method: 'POST', body: fd });
-                const data = await res.json();
+                const response = await fetch('http://127.0.0.1:5000/scan', { method: 'POST', body: fd });
+                const data = await response.json();
 
-                document.getElementById('v').innerText = data.vendor;
-                document.getElementById('t').innerText = data.total + " " + data.currency;
-                document.getElementById('d').innerText = data.date;
+                if(data.error) throw new Error(data.error);
+
+                document.getElementById('resV').innerText = data.vendor;
+                document.getElementById('resT').innerText = `${data.total} ${data.currency}`;
+                document.getElementById('resD').innerText = data.date;
+                document.getElementById('resC').innerText = data.category;
+                document.getElementById('resConf').innerText = data.confidence;
                 
                 document.getElementById('loader').classList.add('hidden');
-                document.getElementById('result').classList.remove('hidden');
+                document.getElementById('results').classList.remove('hidden');
             } catch (err) {
-                alert("Backend not responding. Run 'py app.py' in your terminal!");
+                document.getElementById('apiStatus').innerText = "CONNECTION FAILED";
+                document.getElementById('apiStatus').classList.replace('text-emerald-500', 'text-red-500');
+                alert("The Browser cannot reach app.py. Ensure your terminal is open and running!");
+                console.error(err);
+                location.reload();
             }
         };
     </script>
